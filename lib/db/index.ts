@@ -48,9 +48,22 @@ export function initializeDatabase() {
     .prepare("PRAGMA table_info(project_metadata)")
     .all() as { name: string }[];
 
-  if (!columns.some((c) => c.name === "client_logo_path")) {
-    sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN client_logo_path TEXT`);
+    if (!columns.some((c) => c.name === "client_logo_path")) {
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN client_logo_path TEXT`);
+    }
+
+    if (!columns.some((c) => c.name === "data_inicio_testes")) {
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_inicio_testes TEXT`);
+    }
+    if (!columns.some((c) => c.name === "data_prevista_fim")) {
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_prevista_fim TEXT`);
+    }
+    if (!columns.some((c) => c.name === "data_real_fim")) {
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_real_fim TEXT`);
+    }
+    if (!columns.some((c) => c.name === "fase_testes")) {
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN fase_testes TEXT`);
+    }
   }
-}
 
 initializeDatabase();

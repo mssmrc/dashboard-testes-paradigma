@@ -43,6 +43,10 @@ export const projectMetadata = sqliteTable("project_metadata", {
   analystName: text("analyst_name"),
   pmName: text("pm_name"),
   clientLogoPath: text("client_logo_path"),
+  dataInicioTestes: text("data_inicio_testes"),
+  dataPrevistaFim: text("data_prevista_fim"),
+  dataRealFim: text("data_real_fim"),
+  faseTestes: text("fase_testes"),
 });
 
 export type Scenario = typeof scenarios.$inferSelect;
