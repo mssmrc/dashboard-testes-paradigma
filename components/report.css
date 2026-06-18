@@ -1,0 +1,45 @@
+.report-page {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .report-page {
+    background: white;
+  }
+
+  .report-module-break {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .report-scenario {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .report-footer {
+    display: none;
+  }
+
+  /* Restrições rigorosas para imagens de evidência verticais */
+  img[data-report-image] {
+    max-height: 400px !important;
+    object-fit: contain !important;
+    width: auto !important;
+    height: auto !important;
+  }
+}
