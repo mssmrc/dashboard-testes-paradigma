@@ -60,6 +60,11 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
 
     try {
       await clearProjectMetadata();
+      try {
+        await clearClientLogo();
+      } catch (err) {
+        console.error("Erro ao limpar logo do cliente:", err);
+      }
       setForm({
         clientName: "",
         projectName: "",
@@ -289,7 +294,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
-            Data Início dos Testes
+            Data de início dos testes
           </label>
           <input
             type={locked ? "text" : "date"}
@@ -303,7 +308,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
-            Data Prevista de Fim
+            Data prevista de finalização dos testes
           </label>
           <input
             type={locked ? "text" : "date"}
@@ -317,7 +322,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
-            Data Real de Fim
+            Data real de finalização dos testes
           </label>
           <input
             type={locked ? "text" : "date"}
@@ -325,12 +330,13 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             value={locked ? formatDateToBR(form.dataRealFim) : form.dataRealFim}
             onChange={(e) => setForm({ ...form, dataRealFim: e.target.value })}
             readOnly={locked}
+            required
             className={inputClass}
           />
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
-            Fase de Testes
+            Fase de testes
           </label>
           <select
             value={form.faseTestes}
