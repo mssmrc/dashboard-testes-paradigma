@@ -12,7 +12,11 @@ export type ProjectMetadataFields = {
   projectName: string;
   analystName: string;
   pmName: string;
-  clientLogoPath: string | null;
+  clientLogoPath: string;
+  dataInicioTestes: string;
+  dataPrevistaFim: string;
+  dataRealFim: string;
+  faseTestes: string;
 };
 
 const DEFAULT_METADATA: ProjectMetadataFields = {
@@ -20,7 +24,11 @@ const DEFAULT_METADATA: ProjectMetadataFields = {
   projectName: "",
   analystName: "",
   pmName: "",
-  clientLogoPath: null,
+  clientLogoPath: "",
+  dataInicioTestes: "",
+  dataPrevistaFim: "",
+  dataRealFim: "",
+  faseTestes: "",
 };
 
 export async function getProjectMetadata(): Promise<ProjectMetadataFields> {
@@ -36,43 +44,43 @@ export async function getProjectMetadata(): Promise<ProjectMetadataFields> {
     projectName: row.projectName ?? "",
     analystName: row.analystName ?? "",
     pmName: row.pmName ?? "",
-    clientLogoPath: row.clientLogoPath ?? null,
+    clientLogoPath: row.clientLogoPath ?? "",
+    dataInicioTestes: row.dataInicioTestes ?? "",
+    dataPrevistaFim: row.dataPrevistaFim ?? "",
+    dataRealFim: row.dataRealFim ?? "",
+    faseTestes: row.faseTestes ?? "",
   };
 }
 
 export async function saveProjectMetadata(
-  data: Omit<ProjectMetadataFields, "clientLogoPath"> & {
-    clientLogoPath?: string | null;
-  },
+  data: ProjectMetadataFields,
 ) {
-  const [existing] = await db
-    .select()
-    .from(projectMetadata)
-    .where(eq(projectMetadata.id, 1));
-
   await db
     .insert(projectMetadata)
     .values({
       id: 1,
-      clientName: data.clientName || null,
-      projectName: data.projectName || null,
-      analystName: data.analystName || null,
-      pmName: data.pmName || null,
-      clientLogoPath:
-        data.clientLogoPath !== undefined
-          ? data.clientLogoPath
-          : (existing?.clientLogoPath ?? null),
+      clientName: data.clientName,
+      projectName: data.projectName,
+      analystName: data.analystName,
+      pmName: data.pmName,
+      clientLogoPath: data.clientLogoPath,
+      dataInicioTestes: data.dataInicioTestes,
+      dataPrevistaFim: data.dataPrevistaFim,
+      dataRealFim: data.dataRealFim,
+      faseTestes: data.faseTestes,
     })
     .onConflictDoUpdate({
       target: projectMetadata.id,
       set: {
-        clientName: data.clientName || null,
-        projectName: data.projectName || null,
-        analystName: data.analystName || null,
-        pmName: data.pmName || null,
-        ...(data.clientLogoPath !== undefined
-          ? { clientLogoPath: data.clientLogoPath }
-          : {}),
+        clientName: data.clientName,
+        projectName: data.projectName,
+        analystName: data.analystName,
+        pmName: data.pmName,
+        clientLogoPath: data.clientLogoPath,
+        dataInicioTestes: data.dataInicioTestes,
+        dataPrevistaFim: data.dataPrevistaFim,
+        dataRealFim: data.dataRealFim,
+        faseTestes: data.faseTestes,
       },
     });
 
@@ -82,7 +90,7 @@ export async function saveProjectMetadata(
   return { success: true };
 }
 
-export async function updateClientLogoPath(path: string | null) {
+export async function updateClientLogoPath(logoPath: string) {
   const [existing] = await db
     .select()
     .from(projectMetadata)
@@ -91,16 +99,20 @@ export async function updateClientLogoPath(path: string | null) {
   if (existing) {
     await db
       .update(projectMetadata)
-      .set({ clientLogoPath: path })
+      .set({ clientLogoPath: logoPath || "" })
       .where(eq(projectMetadata.id, 1));
   } else {
     await db.insert(projectMetadata).values({
       id: 1,
-      clientName: null,
-      projectName: null,
-      analystName: null,
-      pmName: null,
-      clientLogoPath: path,
+      clientName: "",
+      projectName: "",
+      analystName: "",
+      pmName: "",
+      clientLogoPath: logoPath || "",
+      dataInicioTestes: "",
+      dataPrevistaFim: "",
+      dataRealFim: "",
+      faseTestes: "",
     });
   }
 
@@ -127,7 +139,7 @@ export async function clearClientLogo() {
 
   await db
     .update(projectMetadata)
-    .set({ clientLogoPath: null })
+    .set({ clientLogoPath: "" })
     .where(eq(projectMetadata.id, 1));
 
   revalidatePath("/");
@@ -137,22 +149,46 @@ export async function clearClientLogo() {
 }
 
 export async function clearProjectMetadata() {
+  const [row] = await db
+    .select()
+    .from(projectMetadata)
+    .where(eq(projectMetadata.id, 1));
+
+  if (row && row.clientLogoPath) {
+    try {
+      const diskPath = path.join(process.cwd(), "public", row.clientLogoPath);
+      await unlink(diskPath);
+    } catch (e) {
+      console.error("Could not delete physical logo file:", e);
+    }
+  }
+
   await db
     .insert(projectMetadata)
     .values({
       id: 1,
-      clientName: null,
-      projectName: null,
-      analystName: null,
-      pmName: null,
+      clientName: "",
+      projectName: "",
+      analystName: "",
+      pmName: "",
+      clientLogoPath: "",
+      dataInicioTestes: "",
+      dataPrevistaFim: "",
+      dataRealFim: "",
+      faseTestes: "",
     })
     .onConflictDoUpdate({
       target: projectMetadata.id,
       set: {
-        clientName: null,
-        projectName: null,
-        analystName: null,
-        pmName: null,
+        clientName: "",
+        projectName: "",
+        analystName: "",
+        pmName: "",
+        clientLogoPath: "",
+        dataInicioTestes: "",
+        dataPrevistaFim: "",
+        dataRealFim: "",
+        faseTestes: "",
       },
     });
 

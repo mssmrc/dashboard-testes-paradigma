@@ -34,14 +34,19 @@ export function initializeDatabase() {
 
     CREATE TABLE IF NOT EXISTS project_metadata (
       id INTEGER PRIMARY KEY,
-      client_name TEXT,
-      project_name TEXT,
-      analyst_name TEXT,
-      pm_name TEXT
+      client_name TEXT NOT NULL DEFAULT '',
+      project_name TEXT NOT NULL DEFAULT '',
+      analyst_name TEXT NOT NULL DEFAULT '',
+      pm_name TEXT NOT NULL DEFAULT '',
+      client_logo_path TEXT NOT NULL DEFAULT '',
+      data_inicio_testes TEXT NOT NULL DEFAULT '',
+      data_prevista_fim TEXT NOT NULL DEFAULT '',
+      data_real_fim TEXT NOT NULL DEFAULT '',
+      fase_testes TEXT NOT NULL DEFAULT ''
     );
 
-    INSERT OR IGNORE INTO project_metadata (id, client_name, project_name, analyst_name, pm_name)
-    VALUES (1, NULL, NULL, NULL, NULL);
+    INSERT OR IGNORE INTO project_metadata (id, client_name, project_name, analyst_name, pm_name, client_logo_path, data_inicio_testes, data_prevista_fim, data_real_fim, fase_testes)
+    VALUES (1, '', '', '', '', '', '', '', '', '');
   `);
 
   const columns = sqlite
@@ -49,21 +54,36 @@ export function initializeDatabase() {
     .all() as { name: string }[];
 
     if (!columns.some((c) => c.name === "client_logo_path")) {
-      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN client_logo_path TEXT`);
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN client_logo_path TEXT NOT NULL DEFAULT ''`);
     }
 
     if (!columns.some((c) => c.name === "data_inicio_testes")) {
-      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_inicio_testes TEXT`);
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_inicio_testes TEXT NOT NULL DEFAULT ''`);
     }
     if (!columns.some((c) => c.name === "data_prevista_fim")) {
-      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_prevista_fim TEXT`);
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_prevista_fim TEXT NOT NULL DEFAULT ''`);
     }
     if (!columns.some((c) => c.name === "data_real_fim")) {
-      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_real_fim TEXT`);
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN data_real_fim TEXT NOT NULL DEFAULT ''`);
     }
     if (!columns.some((c) => c.name === "fase_testes")) {
-      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN fase_testes TEXT`);
+      sqlite.exec(`ALTER TABLE project_metadata ADD COLUMN fase_testes TEXT NOT NULL DEFAULT ''`);
     }
+
+    // Update any existing null values in the database
+    sqlite.exec(`
+      UPDATE project_metadata
+      SET client_name = COALESCE(client_name, ''),
+          project_name = COALESCE(project_name, ''),
+          analyst_name = COALESCE(analyst_name, ''),
+          pm_name = COALESCE(pm_name, ''),
+          client_logo_path = COALESCE(client_logo_path, ''),
+          data_inicio_testes = COALESCE(data_inicio_testes, ''),
+          data_prevista_fim = COALESCE(data_prevista_fim, ''),
+          data_real_fim = COALESCE(data_real_fim, ''),
+          fase_testes = COALESCE(fase_testes, '')
+      WHERE id = 1;
+    `);
   }
 
 initializeDatabase();

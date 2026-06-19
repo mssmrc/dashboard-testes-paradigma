@@ -25,7 +25,11 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
         initialData.projectName ||
         initialData.analystName ||
         initialData.pmName ||
-        initialData.clientLogoPath,
+        initialData.clientLogoPath ||
+        initialData.dataInicioTestes ||
+        initialData.dataPrevistaFim ||
+        initialData.dataRealFim ||
+        initialData.faseTestes,
     ),
   );
   const [saving, setSaving] = useState(false);
@@ -40,7 +44,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
 
     try {
       await clearClientLogo();
-      setForm((prev) => ({ ...prev, clientLogoPath: null }));
+      setForm((prev) => ({ ...prev, clientLogoPath: "" }));
       setMessage("Logo do cliente removido.");
       router.refresh();
     } catch {
@@ -61,7 +65,11 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
         projectName: "",
         analystName: "",
         pmName: "",
-        clientLogoPath: form.clientLogoPath, // keep logo unless specifically cleared
+        clientLogoPath: "",
+        dataInicioTestes: "",
+        dataPrevistaFim: "",
+        dataRealFim: "",
+        faseTestes: "",
       });
       setMessage("Dados do projeto limpos.");
       router.refresh();
@@ -70,7 +78,8 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
     }
   }
 
-  async function handleSave() {
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
     setSaving(true);
     setMessage(null);
     try {
@@ -126,12 +135,13 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
     : "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
   return (
-    <section className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <form onSubmit={handleSave} className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-slate-800">Dados do Projeto</h2>
         <div className="flex gap-2">
           {locked ? (
             <button
+              type="button"
               onClick={handleEdit}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
@@ -140,7 +150,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             </button>
           ) : (
             <button
-              onClick={handleSave}
+              type="submit"
               disabled={saving}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
             >
@@ -149,6 +159,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             </button>
           )}
           <button
+            type="button"
             onClick={handleClearProjectMetadata}
             className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
           >
@@ -220,6 +231,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             value={form.clientName}
             onChange={(e) => setForm({ ...form, clientName: e.target.value })}
             readOnly={locked}
+            required
             placeholder="Ex: Empresa XYZ Ltda."
             className={inputClass}
           />
@@ -233,6 +245,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             value={form.projectName}
             onChange={(e) => setForm({ ...form, projectName: e.target.value })}
             readOnly={locked}
+            required
             placeholder="Ex: Homologação Portal de Compras"
             className={inputClass}
           />
@@ -246,6 +259,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             value={form.analystName}
             onChange={(e) => setForm({ ...form, analystName: e.target.value })}
             readOnly={locked}
+            required
             placeholder="Ex: Moisés Souza"
             className={inputClass}
           />
@@ -259,14 +273,71 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             value={form.pmName}
             onChange={(e) => setForm({ ...form, pmName: e.target.value })}
             readOnly={locked}
+            required
             placeholder="Ex: Moisés Souza"
             className={inputClass}
           />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Data Início dos Testes
+          </label>
+          <input
+            type="date"
+            value={form.dataInicioTestes}
+            onChange={(e) => setForm({ ...form, dataInicioTestes: e.target.value })}
+            readOnly={locked}
+            required
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Data Prevista de Fim
+          </label>
+          <input
+            type="date"
+            value={form.dataPrevistaFim}
+            onChange={(e) => setForm({ ...form, dataPrevistaFim: e.target.value })}
+            readOnly={locked}
+            required
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Data Real de Fim
+          </label>
+          <input
+            type="date"
+            value={form.dataRealFim}
+            onChange={(e) => setForm({ ...form, dataRealFim: e.target.value })}
+            readOnly={locked}
+            required
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Fase de Testes
+          </label>
+          <select
+            value={form.faseTestes}
+            onChange={(e) => setForm({ ...form, faseTestes: e.target.value })}
+            disabled={locked}
+            required
+            className={inputClass}
+          >
+            <option value="">Selecione...</option>
+            <option value="Testes unitários">Testes unitários</option>
+            <option value="Testes integrados">Testes integrados</option>
+            <option value="Homologação">Homologação</option>
+          </select>
         </div>
       </div>
       <p className="mt-3 text-xs text-slate-400">
         Empresa base: Paradigma — estes dados são exibidos apenas no Dashboard.
       </p>
-    </section>
+    </form>
   );
 }

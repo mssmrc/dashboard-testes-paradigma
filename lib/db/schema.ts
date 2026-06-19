@@ -38,15 +38,15 @@ export const evidencesRelations = relations(evidences, ({ one }) => ({
 
 export const projectMetadata = sqliteTable("project_metadata", {
   id: integer("id").primaryKey(),
-  clientName: text("client_name"),
-  projectName: text("project_name"),
-  analystName: text("analyst_name"),
-  pmName: text("pm_name"),
-  clientLogoPath: text("client_logo_path"),
-  dataInicioTestes: text("data_inicio_testes"),
-  dataPrevistaFim: text("data_prevista_fim"),
-  dataRealFim: text("data_real_fim"),
-  faseTestes: text("fase_testes"),
+  clientName: text("client_name").notNull(),
+  projectName: text("project_name").notNull(),
+  analystName: text("analyst_name").notNull(),
+  pmName: text("pm_name").notNull(),
+  clientLogoPath: text("client_logo_path").notNull(),
+  dataInicioTestes: text("data_inicio_testes").notNull(),
+  dataPrevistaFim: text("data_prevista_fim").notNull(),
+  dataRealFim: text("data_real_fim").notNull(),
+  faseTestes: text("fase_testes").notNull(),
 });
 
 export type Scenario = typeof scenarios.$inferSelect;
