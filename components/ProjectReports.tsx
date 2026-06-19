@@ -17,57 +17,153 @@ import {
   Line
 } from "recharts";
 import { BarChart3, PieChart as PieChartIcon, Layers, Calendar } from "lucide-react";
+import { getAllScenarios, type ScenarioWithEvidences } from "@/lib/actions/scenarios";
 
-// Mock Data
-const progressData = [
-  { name: "Catálogo", realizado: 85, esperado: 90 },
-  { name: "Contrato", realizado: 60, esperado: 75 },
-  { name: "SLA", realizado: 42, esperado: 50 },
-  { name: "Core", realizado: 90, esperado: 95 },
-  { name: "Integração", realizado: 30, esperado: 45 },
-  { name: "Relatórios", realizado: 15, esperado: 30 }
-];
-
-const moduleDivisionData = [
-  { name: "Catálogo", master: 25, transaction: 5 },
-  { name: "Contrato", master: 18, transaction: 12 },
-  { name: "SLA", master: 8, transaction: 28 },
-  { name: "Core", master: 30, transaction: 32 },
-  { name: "Integração", master: 10, transaction: 22 },
-  { name: "Relatórios", master: 4, transaction: 15 }
-];
-
-const completionData = [
-  { name: "Concluído", value: 65, color: "#22c55e" },      // Green 500
-  { name: "Em andamento", value: 20, color: "#f59e0b" },  // Amber 500
-  { name: "Não iniciado", value: 15, color: "#94a3b8" }  // Slate 400
-];
-
-const dailyCountData = [
-  { date: "12/Jun", count: 8 },
-  { date: "13/Jun", count: 14 },
-  { date: "14/Jun", count: 21 },
-  { date: "15/Jun", count: 18 },
-  { date: "16/Jun", count: 29 },
-  { date: "17/Jun", count: 35 },
-  { date: "18/Jun", count: 22 }
-];
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
+  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const monthIdx = parseInt(month, 10) - 1;
+  if (monthIdx >= 0 && monthIdx < 12) {
+    return `${day}/${months[monthIdx]}`;
+  }
+  return dateStr;
+}
 
 export default function ProjectReports() {
   const [mounted, setMounted] = useState(false);
+  const [scenarios, setScenarios] = useState<ScenarioWithEvidences[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Avoid hydration issues by rendering charts only on the client
+  // Fetch scenarios and handle mounting state
   useEffect(() => {
+    async function fetchData() {
+      try {
+        const data = await getAllScenarios();
+        setScenarios(data);
+      } catch (err) {
+        console.error("Erro ao carregar cenários para os relatórios:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
     setMounted(true);
+    fetchData();
   }, []);
 
-  if (!mounted) {
+  if (!mounted || loading) {
     return (
       <div className="flex h-96 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm">
-        <p className="text-slate-500">Carregando painel de relatórios...</p>
+        <p className="text-slate-500 animate-pulse">Carregando painel de relatórios...</p>
       </div>
     );
   }
+
+  // If there are no scenarios in the database
+  if (scenarios.length === 0) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <BarChart3 className="mb-3 h-12 w-12 text-slate-300" />
+        <h3 className="text-lg font-medium text-slate-800">Nenhum dado disponível</h3>
+        <p className="mt-1 text-sm text-slate-500 max-w-sm">
+          Importe ou crie cenários de teste nos módulos para visualizar os gráficos e relatórios consolidados.
+        </p>
+      </div>
+    );
+  }
+
+  // 1. Progresso Esperado x Realizado por Módulo (Seção 1)
+  const modulesMap = new Map<string, { total: number; completed: number }>();
+  scenarios.forEach((s) => {
+    const stats = modulesMap.get(s.module) || { total: 0, completed: 0 };
+    stats.total += 1;
+    if (s.status === "Concluído") {
+      stats.completed += 1;
+    }
+    modulesMap.set(s.module, stats);
+  });
+
+  const progressData = Array.from(modulesMap.entries())
+    .map(([name, stats]) => ({
+      name,
+      realizado: Math.round((stats.completed / stats.total) * 100),
+      esperado: 100 // Meta é sempre 100%
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // 2. Divisão por Módulos (Dados Mestres vs Movimentações) (Seção 2)
+  let masterExecutados = 0;
+  let masterRestantes = 0;
+  let transactionExecutados = 0;
+  let transactionRestantes = 0;
+
+  scenarios.forEach((s) => {
+    const isMaster =
+      s.module.trim().toLowerCase() === "dados mestres" ||
+      s.module.trim().toLowerCase() === "dados-mestres" ||
+      s.module.trim().toLowerCase() === "dados_mestres";
+    const isCompleted = s.status === "Concluído";
+
+    if (isMaster) {
+      if (isCompleted) {
+        masterExecutados += 1;
+      } else {
+        masterRestantes += 1;
+      }
+    } else {
+      if (isCompleted) {
+        transactionExecutados += 1;
+      } else {
+        transactionRestantes += 1;
+      }
+    }
+  });
+
+  const moduleDivisionData = [
+    { name: "Dados Mestres", executados: masterExecutados, restantes: masterRestantes },
+    { name: "Movimentações", executados: transactionExecutados, restantes: transactionRestantes }
+  ];
+
+  // 3. Status de Execução Geral (Seção 3 - Pizza)
+  let completedCount = 0;
+  let inProgressCount = 0;
+  let notStartedCount = 0;
+
+  scenarios.forEach((s) => {
+    if (s.status === "Concluído") {
+      completedCount += 1;
+    } else if (s.status === "Em andamento") {
+      inProgressCount += 1;
+    } else if (s.status === "Não iniciado") {
+      notStartedCount += 1;
+    }
+  });
+
+  const totalScenarios = completedCount + inProgressCount + notStartedCount;
+
+  const completionData = [
+    { name: "Concluído", value: totalScenarios > 0 ? Math.round((completedCount / totalScenarios) * 100) : 0, color: "#22c55e" },
+    { name: "Em andamento", value: totalScenarios > 0 ? Math.round((inProgressCount / totalScenarios) * 100) : 0, color: "#f59e0b" },
+    { name: "Não iniciado", value: totalScenarios > 0 ? Math.round((notStartedCount / totalScenarios) * 100) : 0, color: "#94a3b8" }
+  ];
+
+  // 4. Cenários Concluídos por Dia (Seção 3 - Linha)
+  const dailyMap = new Map<string, number>();
+  scenarios.forEach((s) => {
+    if (s.status === "Concluído" && s.executionDate) {
+      dailyMap.set(s.executionDate, (dailyMap.get(s.executionDate) || 0) + 1);
+    }
+  });
+
+  const dailyCountData = Array.from(dailyMap.entries())
+    .map(([date, count]) => ({
+      rawDate: date,
+      date: formatDate(date),
+      count
+    }))
+    .sort((a, b) => a.rawDate.localeCompare(b.rawDate));
 
   return (
     <div className="space-y-8">
@@ -97,7 +193,7 @@ export default function ProjectReports() {
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
               <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
-              <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12, fill: "#475569" }} />
+              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} />
               <Tooltip formatter={(value) => [`${value}%`]} />
               <Legend />
               <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
@@ -130,8 +226,8 @@ export default function ProjectReports() {
               <YAxis tick={{ fontSize: 12, fill: "#475569" }} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="master" name="Dados Mestres" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="transaction" name="Movimentações" fill="#A855F7" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="executados" name="Executados" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="restantes" name="Restantes" fill="#A855F7" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -202,28 +298,34 @@ export default function ProjectReports() {
             </p>
           </div>
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={dailyCountData}
-                margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#475569" }} />
-                <YAxis tick={{ fontSize: 12, fill: "#475569" }} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  name="Cenários Concluídos"
-                  stroke="#2563eb"
-                  strokeWidth={3}
-                  activeDot={{ r: 8 }}
-                  dot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {dailyCountData.length === 0 ? (
+            <div className="flex h-64 items-center justify-center text-slate-400">
+              Nenhum cenário concluído com data registrada
+            </div>
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={dailyCountData}
+                  margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#475569" }} />
+                  <YAxis tick={{ fontSize: 12, fill: "#475569" }} allowDecimals={false} />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    name="Cenários Concluídos"
+                    stroke="#2563eb"
+                    strokeWidth={3}
+                    activeDot={{ r: 8 }}
+                    dot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </div>
     </div>
