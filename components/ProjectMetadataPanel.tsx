@@ -130,6 +130,15 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
     }
   }
 
+  const formatDateToBR = (dateStr: string) => {
+    if (!dateStr) return "";
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  };
+
   const inputClass = locked
     ? "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
     : "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
@@ -283,8 +292,9 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             Data Início dos Testes
           </label>
           <input
-            type="date"
-            value={form.dataInicioTestes}
+            type={locked ? "text" : "date"}
+            lang="pt-BR"
+            value={locked ? formatDateToBR(form.dataInicioTestes) : form.dataInicioTestes}
             onChange={(e) => setForm({ ...form, dataInicioTestes: e.target.value })}
             readOnly={locked}
             required
@@ -296,8 +306,9 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             Data Prevista de Fim
           </label>
           <input
-            type="date"
-            value={form.dataPrevistaFim}
+            type={locked ? "text" : "date"}
+            lang="pt-BR"
+            value={locked ? formatDateToBR(form.dataPrevistaFim) : form.dataPrevistaFim}
             onChange={(e) => setForm({ ...form, dataPrevistaFim: e.target.value })}
             readOnly={locked}
             required
@@ -309,11 +320,11 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             Data Real de Fim
           </label>
           <input
-            type="date"
-            value={form.dataRealFim}
+            type={locked ? "text" : "date"}
+            lang="pt-BR"
+            value={locked ? formatDateToBR(form.dataRealFim) : form.dataRealFim}
             onChange={(e) => setForm({ ...form, dataRealFim: e.target.value })}
             readOnly={locked}
-            required
             className={inputClass}
           />
         </div>

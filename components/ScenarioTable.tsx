@@ -163,6 +163,7 @@ function ScenarioRow({
       <td className="min-w-[150px] px-3 py-2.5">
         <input
           type="date"
+          lang="pt-BR"
           value={draft.executionDate}
           onChange={(e) =>
             onDraftChange(scenario.id, "executionDate", e.target.value)
@@ -243,6 +244,9 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
   const [bulkStatus, setBulkStatus] = useState<string>("");
   const [bulkDate, setBulkDate] = useState<string>("");
   const [bulkExecutor, setBulkExecutor] = useState<string>("");
+  const [bulkObservations, setBulkObservations] = useState<string>("");
+  const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkSaving, setBulkSaving] = useState(false);
 
   function handleSelectToggle(id: number) {
@@ -253,6 +257,13 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
 
   async function handleBulkApply() {
     if (selectedIds.length === 0) return;
+    setBulkError(null);
+
+    if (!bulkObservations.trim() && !bulkFile) {
+      setBulkError("Para aplicar alterações, preencha o campo de observações ou anexe um arquivo de evidência.");
+      return;
+    }
+
     setBulkSaving(true);
     setSaveMessage(null);
     try {
@@ -260,6 +271,7 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
         status?: ScenarioStatus;
         executionDate?: string | null;
         executor?: string | null;
+        observations?: string | null;
       } = {};
 
       if (bulkStatus) {
@@ -271,8 +283,24 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
       if (bulkExecutor !== undefined && bulkExecutor !== "") {
         dataToUpdate.executor = bulkExecutor;
       }
+      if (bulkObservations !== undefined && bulkObservations !== "") {
+        dataToUpdate.observations = bulkObservations;
+      }
 
       await bulkUpdateFields(selectedIds, dataToUpdate);
+
+      if (bulkFile) {
+        for (const id of selectedIds) {
+          const formData = new FormData();
+          formData.append("scenarioId", String(id));
+          formData.append("file", bulkFile);
+          const res = await fetch("/api/upload", { method: "POST", body: formData });
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || "Erro ao enviar anexo de evidência.");
+          }
+        }
+      }
 
       setDrafts((prev) => {
         const next = { ...prev };
@@ -281,6 +309,7 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
             if (bulkStatus) next[id].status = bulkStatus as ScenarioStatus;
             if (bulkDate !== "") next[id].executionDate = bulkDate;
             if (bulkExecutor !== "") next[id].executor = bulkExecutor;
+            if (bulkObservations !== "") next[id].observations = bulkObservations;
           }
         }
         return next;
@@ -290,9 +319,13 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
       setBulkStatus("");
       setBulkDate("");
       setBulkExecutor("");
+      setBulkObservations("");
+      setBulkFile(null);
+      setBulkError(null);
       setSaveMessage("Atualização em massa concluída com sucesso.");
       router.refresh();
-    } catch {
+    } catch (e: any) {
+      setBulkError(e.message || "Erro ao aplicar atualização em massa.");
       setSaveMessage("Erro ao aplicar atualização em massa.");
     } finally {
       setBulkSaving(false);
@@ -512,9 +545,36 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
               />
             </div>
 
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Alterar Observações</label>
+              <input
+                type="text"
+                value={bulkObservations}
+                onChange={(e) => {
+                  setBulkObservations(e.target.value);
+                  setBulkError(null);
+                }}
+                placeholder="Observações"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Anexar Evidência</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  setBulkFile(e.target.files?.[0] || null);
+                  setBulkError(null);
+                }}
+                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 w-[180px]"
+              />
+            </div>
+
             <button
               onClick={handleBulkApply}
-              disabled={bulkSaving || (!bulkStatus && !bulkDate && !bulkExecutor)}
+              disabled={bulkSaving || (!bulkObservations.trim() && !bulkFile)}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
             >
               Aplicar em Lote
@@ -526,12 +586,20 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
                 setBulkStatus("");
                 setBulkDate("");
                 setBulkExecutor("");
+                setBulkObservations("");
+                setBulkFile(null);
+                setBulkError(null);
               }}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               Cancelar
             </button>
           </div>
+          {bulkError && (
+            <div className="w-full text-xs font-semibold text-red-600 mt-2">
+              {bulkError}
+            </div>
+          )}
         </div>
       )}
 

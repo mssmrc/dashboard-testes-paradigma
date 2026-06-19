@@ -45,7 +45,7 @@ export const projectMetadata = sqliteTable("project_metadata", {
   clientLogoPath: text("client_logo_path").notNull(),
   dataInicioTestes: text("data_inicio_testes").notNull(),
   dataPrevistaFim: text("data_prevista_fim").notNull(),
-  dataRealFim: text("data_real_fim").notNull(),
+  dataRealFim: text("data_real_fim"),
   faseTestes: text("fase_testes").notNull(),
 });
 

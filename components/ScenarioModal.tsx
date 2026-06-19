@@ -214,6 +214,7 @@ export function ScenarioModal({
               </label>
               <input
                 type="date"
+                lang="pt-BR"
                 value={form.executionDate}
                 onChange={(e) => setForm({ ...form, executionDate: e.target.value })}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"

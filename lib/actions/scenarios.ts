@@ -281,6 +281,7 @@ export async function bulkUpdateFields(
     status?: ScenarioStatus;
     executionDate?: string | null;
     executor?: string | null;
+    observations?: string | null;
   },
 ) {
   if (ids.length === 0) return { updated: 0 };
@@ -289,6 +290,7 @@ export async function bulkUpdateFields(
   if (data.status !== undefined) setClause.status = data.status;
   if (data.executionDate !== undefined) setClause.executionDate = data.executionDate;
   if (data.executor !== undefined) setClause.executor = data.executor;
+  if (data.observations !== undefined) setClause.observations = data.observations;
 
   if (Object.keys(setClause).length === 0) return { updated: 0 };
 
