@@ -67,8 +67,10 @@ export function ScenarioTableRow({
     }
   }
 
+  const isCompleted = draft.status === "Concluído";
+
   return (
-    <tr className="align-top hover:bg-slate-50">
+    <tr className={`align-top hover:bg-slate-50 ${isCompleted ? "bg-gray-100" : ""}`}>
       <td className="px-3 py-2.5 select-none">
         <input
           type="checkbox"

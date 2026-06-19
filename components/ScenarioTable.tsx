@@ -69,7 +69,6 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
   const [bulkDate, setBulkDate] = useState<string>("");
   const [bulkExecutor, setBulkExecutor] = useState<string>("");
   const [bulkObservations, setBulkObservations] = useState<string>("");
-  const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [bulkSaving, setBulkSaving] = useState(false);
 
@@ -83,8 +82,8 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
     if (selectedIds.length === 0) return;
     setBulkError(null);
 
-    if (!bulkObservations.trim() && !bulkFile) {
-      setBulkError("Para aplicar alterações, preencha o campo de observações ou anexe um arquivo de evidência.");
+    if (!bulkStatus && !bulkDate && !bulkExecutor && !bulkObservations.trim()) {
+      setBulkError("Para aplicar alterações, preencha pelo menos um campo.");
       return;
     }
 
@@ -113,19 +112,6 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
 
       await bulkUpdateFields(selectedIds, dataToUpdate);
 
-      if (bulkFile) {
-        for (const id of selectedIds) {
-          const formData = new FormData();
-          formData.append("scenarioId", String(id));
-          formData.append("file", bulkFile);
-          const res = await fetch("/api/upload", { method: "POST", body: formData });
-          if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.error || "Erro ao enviar anexo de evidência.");
-          }
-        }
-      }
-
       setDrafts((prev) => {
         const next = { ...prev };
         for (const id of selectedIds) {
@@ -144,7 +130,6 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
       setBulkDate("");
       setBulkExecutor("");
       setBulkObservations("");
-      setBulkFile(null);
       setBulkError(null);
       setSaveMessage("Atualização em massa concluída com sucesso.");
       router.refresh();
@@ -383,22 +368,9 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Anexar Evidência</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  setBulkFile(e.target.files?.[0] || null);
-                  setBulkError(null);
-                }}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 w-[180px]"
-              />
-            </div>
-
             <button
               onClick={handleBulkApply}
-              disabled={bulkSaving || (!bulkObservations.trim() && !bulkFile)}
+              disabled={bulkSaving || (!bulkStatus && !bulkDate && !bulkExecutor && !bulkObservations.trim())}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
             >
               Aplicar em Lote
@@ -411,7 +383,6 @@ export function ScenarioTable({ moduleName, scenarios }: ScenarioTableProps) {
                 setBulkDate("");
                 setBulkExecutor("");
                 setBulkObservations("");
-                setBulkFile(null);
                 setBulkError(null);
               }}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
