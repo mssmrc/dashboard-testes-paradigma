@@ -5,6 +5,7 @@ import { CsvImportButton } from "@/components/CsvImportButton";
 import { ClearScenariosButton } from "@/components/ClearScenariosButton";
 import { GlobalReportLinkButton } from "@/components/GlobalReportLinkButton";
 import { ProjectMetadataPanel } from "@/components/ProjectMetadataPanel";
+import ProjectReports from "@/components/ProjectReports";
 import {
   getDashboardStats,
   getAllScenarios,
@@ -41,6 +42,10 @@ export default async function HomePage() {
           <GlobalReportLinkButton disabled={allScenarios.length === 0} />
           <ClearScenariosButton />
         </div>
+
+        <section className="mb-10">
+          <ProjectReports />
+        </section>
 
         <section className="mb-10 grid gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
