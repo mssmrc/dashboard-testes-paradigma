@@ -16,31 +16,31 @@ import {
   LineChart,
   Line
 } from "recharts";
-import { BarChart3, PieChart as PieChartIcon, Layers, Calendar, CheckCircle2, AlertTriangle, PlayCircle } from "lucide-react";
+import { BarChart3, PieChart as PieChartIcon, Layers, Calendar } from "lucide-react";
 
 // Mock Data
 const progressData = [
-  { name: "Cadastro de Clientes", progress: 85 },
-  { name: "Regras de Impostos", progress: 60 },
-  { name: "Movimentação de Estoque", progress: 42 },
-  { name: "Faturamento e NFe", progress: 90 },
-  { name: "Integração Bancária", progress: 30 },
-  { name: "Relatórios Gerenciais", progress: 15 }
+  { name: "Catálogo", realizado: 85, esperado: 90 },
+  { name: "Contrato", realizado: 60, esperado: 75 },
+  { name: "SLA", realizado: 42, esperado: 50 },
+  { name: "Core", realizado: 90, esperado: 95 },
+  { name: "Integração", realizado: 30, esperado: 45 },
+  { name: "Relatórios", realizado: 15, esperado: 30 }
 ];
 
 const moduleDivisionData = [
-  { name: "Cadastros", master: 25, transaction: 5 },
-  { name: "Impostos", master: 18, transaction: 12 },
-  { name: "Estoque", master: 8, transaction: 28 },
-  { name: "Faturamento", master: 6, transaction: 32 },
-  { name: "Financeiro", master: 10, transaction: 22 },
+  { name: "Catálogo", master: 25, transaction: 5 },
+  { name: "Contrato", master: 18, transaction: 12 },
+  { name: "SLA", master: 8, transaction: 28 },
+  { name: "Core", master: 30, transaction: 32 },
+  { name: "Integração", master: 10, transaction: 22 },
   { name: "Relatórios", master: 4, transaction: 15 }
 ];
 
 const completionData = [
-  { name: "Sucesso", value: 65, color: "#10B981" }, // Emerald 500
-  { name: "Pendente", value: 20, color: "#F59E0B" }, // Amber 500
-  { name: "Falha", value: 15, color: "#EF4444" }    // Red 500
+  { name: "Concluído", value: 65, color: "#22c55e" },      // Green 500
+  { name: "Em andamento", value: 20, color: "#f59e0b" },  // Amber 500
+  { name: "Não iniciado", value: 15, color: "#94a3b8" }  // Slate 400
 ];
 
 const dailyCountData = [
@@ -63,102 +63,27 @@ export default function ProjectReports() {
 
   if (!mounted) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-xl border border-gray-100 bg-white shadow-xs dark:border-gray-800 dark:bg-gray-900">
-        <p className="text-gray-500 dark:text-gray-400">Carregando painel de relatórios...</p>
+      <div className="flex h-96 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm">
+        <p className="text-slate-500">Carregando painel de relatórios...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Overview Cards (KPIs) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-xs transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                Progresso Geral
-              </p>
-              <h3 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">65%</h3>
-            </div>
-            <div className="rounded-lg bg-emerald-50 p-2.5 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-              <CheckCircle2 className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">+5%</span>
-            <span className="ml-1">desde o último relatório</span>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-xs transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                Dados Mestres
-              </p>
-              <h3 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">71</h3>
-            </div>
-            <div className="rounded-lg bg-blue-50 p-2.5 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-              <Layers className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-blue-600 dark:text-blue-400">38.5%</span>
-            <span className="ml-1">do total de cenários</span>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-xs transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                Movimentações
-              </p>
-              <h3 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">114</h3>
-            </div>
-            <div className="rounded-lg bg-purple-50 p-2.5 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
-              <PlayCircle className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-purple-600 dark:text-purple-400">61.5%</span>
-            <span className="ml-1">do total de cenários</span>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-xs transition-all hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
-                Avisos / Falhas
-              </p>
-              <h3 className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">15%</h3>
-            </div>
-            <div className="rounded-lg bg-red-50 p-2.5 text-red-600 dark:bg-red-950/50 dark:text-red-400">
-              <AlertTriangle className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-semibold text-red-600 dark:text-red-400">15 cenários</span>
-            <span className="ml-1">com falha</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Seção 1: Visão de Progresso (Horizontal Bar Chart) */}
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-xs dark:border-gray-800 dark:bg-gray-900">
+      {/* Seção 1: Progresso Esperado x Real (Horizontal Bar Chart) */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-              <BarChart3 className="h-5 w-5 text-indigo-500" />
-              Visão de Progresso por Área
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Progresso Esperado x Realizado por Módulo
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Percentual de conclusão dos testes por módulo do projeto.
+            <p className="text-sm text-slate-500">
+              Comparativo entre o avanço esperado e o realizado em cada módulo do projeto.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
             <span>Meta: 100%</span>
           </div>
         </div>
@@ -168,26 +93,28 @@ export default function ProjectReports() {
             <BarChart
               data={progressData}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-              <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-              <YAxis dataKey="name" type="category" width={150} />
-              <Tooltip formatter={(value) => [`${value}%`, "Progresso"]} />
-              <Bar dataKey="progress" fill="#6366F1" radius={[0, 4, 4, 0]} barSize={20} />
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+              <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
+              <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12, fill: "#475569" }} />
+              <Tooltip formatter={(value) => [`${value}%`]} />
+              <Legend />
+              <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
+              <Bar dataKey="esperado" name="Esperado" fill="#94a3b8" radius={[0, 4, 4, 0]} barSize={12} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Seção 2: Divisão por Módulos (Master vs Transaction) */}
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-xs dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-            <Layers className="h-5 w-5 text-indigo-500" />
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+            <Layers className="h-5 w-5 text-blue-600" />
             Divisão por Módulos: Dados Mestres vs Movimentações
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-slate-500">
             Comparativo entre cenários de configuração/dados cadastrais estáveis e fluxos de transações operacionais dinâmicas.
           </p>
         </div>
@@ -196,11 +123,11 @@ export default function ProjectReports() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={moduleDivisionData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 20, right: 30, left: 10, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#475569" }} />
+              <YAxis tick={{ fontSize: 12, fill: "#475569" }} />
               <Tooltip />
               <Legend />
               <Bar dataKey="master" name="Dados Mestres" fill="#3B82F6" radius={[4, 4, 0, 0]} />
@@ -213,13 +140,13 @@ export default function ProjectReports() {
       {/* Seção 3: Relatórios de Módulo (Pie and Line charts) */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Pie Chart */}
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-xs lg:col-span-5 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-5">
           <div className="mb-6">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-              <PieChartIcon className="h-5 w-5 text-indigo-500" />
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+              <PieChartIcon className="h-5 w-5 text-blue-600" />
               Status de Execução Geral
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-slate-500">
               Distribuição atual do status dos cenários de teste mapeados.
             </p>
           </div>
@@ -247,14 +174,14 @@ export default function ProjectReports() {
             </div>
 
             {/* Legend & Stats */}
-            <div className="mt-4 grid w-full grid-cols-3 gap-2 border-t border-gray-100 pt-4 text-center dark:border-gray-800">
+            <div className="mt-4 grid w-full grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
               {completionData.map((entry, index) => (
                 <div key={index} className="flex flex-col items-center">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                     {entry.name}
                   </div>
-                  <span className="mt-1 text-lg font-bold text-gray-800 dark:text-gray-200">
+                  <span className="mt-1 text-lg font-bold text-slate-800">
                     {entry.value}%
                   </span>
                 </div>
@@ -264,13 +191,13 @@ export default function ProjectReports() {
         </div>
 
         {/* Line Chart */}
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-xs lg:col-span-7 dark:border-gray-800 dark:bg-gray-900">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-7">
           <div className="mb-6">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-              <Calendar className="h-5 w-5 text-indigo-500" />
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+              <Calendar className="h-5 w-5 text-blue-600" />
               Cenários Concluídos por Dia
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-slate-500">
               Histórico diário de conclusão de novos cenários de testes no projeto.
             </p>
           </div>
@@ -281,15 +208,15 @@ export default function ProjectReports() {
                 data={dailyCountData}
                 margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#475569" }} />
+                <YAxis tick={{ fontSize: 12, fill: "#475569" }} />
                 <Tooltip />
                 <Line
                   type="monotone"
                   dataKey="count"
                   name="Cenários Concluídos"
-                  stroke="#4F46E5"
+                  stroke="#2563eb"
                   strokeWidth={3}
                   activeDot={{ r: 8 }}
                   dot={{ r: 4 }}
