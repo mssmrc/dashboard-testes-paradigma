@@ -5,7 +5,6 @@ import { ClearScenariosButton } from "@/components/ClearScenariosButton";
 import { GlobalReportLinkButton } from "@/components/GlobalReportLinkButton";
 import { ProjectMetadataPanel } from "@/components/ProjectMetadataPanel";
 import ProjectReports from "@/components/ProjectReports";
-import { ScenarioTable } from "@/components/ScenarioTable";
 import {
   getAllScenarios,
   getDistinctModules,
@@ -49,12 +48,6 @@ export default async function HomePage() {
         {/* 3º: ProjectReports (A área de Análise) */}
         <section className="mb-10">
           <ProjectReports />
-        </section>
-
-        {/* 4º: ScenarioTable (A tabela de cenários) */}
-        <section>
-          <h2 className="mb-4 text-lg font-semibold text-slate-800">Todos os Cenários</h2>
-          <ScenarioTable moduleName="" scenarios={allScenarios} />
         </section>
       </main>
     </div>

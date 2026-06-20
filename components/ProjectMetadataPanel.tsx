@@ -330,7 +330,6 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             value={locked ? formatDateToBR(form.dataRealFim) : form.dataRealFim}
             onChange={(e) => setForm({ ...form, dataRealFim: e.target.value })}
             readOnly={locked}
-            required
             className={inputClass}
           />
         </div>
