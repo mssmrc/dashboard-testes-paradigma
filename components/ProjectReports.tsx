@@ -194,7 +194,8 @@ export default function ProjectReports() {
               <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
               <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
               <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} />
-              <Tooltip formatter={(value) => [`${value}%`]} />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Tooltip formatter={(value: any) => [`${value}%`]} />
               <Legend />
               <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
               <Bar dataKey="esperado" name="Esperado" fill="#94a3b8" radius={[0, 4, 4, 0]} barSize={12} />
@@ -264,7 +265,8 @@ export default function ProjectReports() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [`${value}%`, "Proporção"]} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Tooltip formatter={(value: any) => [`${value}%`, "Proporção"]} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
