@@ -32,6 +32,22 @@ function formatDate(dateStr: string): string {
   return dateStr;
 }
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-md">
+        <p className="font-semibold text-slate-800">{data.name}</p>
+        <p className="text-sm text-blue-600 font-medium">
+          {data.percentual}% ({data.executados}/{data.total})
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function ProjectReports() {
   const [mounted, setMounted] = useState(false);
   const [scenarios, setScenarios] = useState<ScenarioWithEvidences[]>([]);
@@ -121,10 +137,54 @@ export default function ProjectReports() {
     }
   });
 
+  const masterTotal = masterExecutados + masterRestantes;
+  const masterPercent = masterTotal > 0 ? Math.round((masterExecutados / masterTotal) * 100) : 0;
+
+  const transactionTotal = transactionExecutados + transactionRestantes;
+  const transactionPercent = transactionTotal > 0 ? Math.round((transactionExecutados / transactionTotal) * 100) : 0;
+
   const moduleDivisionData = [
-    { name: "Dados Mestres", executados: masterExecutados, restantes: masterRestantes },
-    { name: "Movimentações", executados: transactionExecutados, restantes: transactionRestantes }
+    {
+      name: "Dados Mestres",
+      percentual: masterPercent,
+      executados: masterExecutados,
+      total: masterTotal,
+    },
+    {
+      name: "Movimentações",
+      percentual: transactionPercent,
+      executados: transactionExecutados,
+      total: transactionTotal,
+    }
   ];
+
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  const renderCustomBarLabel = (props: any) => {
+    const { x, y, width, height, index } = props;
+    const item = moduleDivisionData[index];
+    if (!item) return null;
+
+    if (height <= 0) return null;
+
+    const labelText = `${item.percentual}% (${item.executados}/${item.total})`;
+    const isSmall = height < 25;
+    const textY = isSmall ? y - 8 : y + height / 2;
+    const textColor = isSmall ? "#1e293b" : "#ffffff";
+
+    return (
+      <text
+        x={x + width / 2}
+        y={textY}
+        fill={textColor}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={11}
+        fontWeight="semibold"
+      >
+        {labelText}
+      </text>
+    );
+  };
 
   // 3. Status de Execução Geral (Seção 3 - Pizza)
   let completedCount = 0;
@@ -224,11 +284,16 @@ export default function ProjectReports() {
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#475569" }} />
-              <YAxis tick={{ fontSize: 12, fill: "#475569" }} />
-              <Tooltip />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "#475569" }} />
+              <Tooltip content={<CustomTooltip />} />
               <Legend />
-              <Bar dataKey="executados" name="Executados" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="restantes" name="Restantes" fill="#A855F7" radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey="percentual"
+                name="Progresso"
+                fill="#3B82F6"
+                radius={[4, 4, 0, 0]}
+                label={renderCustomBarLabel}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
