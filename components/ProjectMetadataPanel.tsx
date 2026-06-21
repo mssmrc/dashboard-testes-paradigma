@@ -99,7 +99,8 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
     }
   }
 
-  function handleEdit() {
+  function handleEdit(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
     setLocked(false);
     setMessage(null);
   }
