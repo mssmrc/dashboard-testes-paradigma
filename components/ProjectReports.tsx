@@ -18,6 +18,27 @@ import {
 } from "recharts";
 import { BarChart3, PieChart as PieChartIcon, Layers, Calendar } from "lucide-react";
 import { getAllScenarios, type ScenarioWithEvidences } from "@/lib/actions/scenarios";
+import { getProjectMetadata, type ProjectMetadataFields } from "@/lib/actions/project-metadata";
+
+function getBusinessDays(startDateStr: string, endDateStr: string): number {
+  if (!startDateStr || !endDateStr) return 0;
+  const start = new Date(startDateStr + "T00:00:00");
+  const end = new Date(endDateStr + "T00:00:00");
+  
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+  if (start > end) return 0;
+  
+  let count = 0;
+  const current = new Date(start);
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return count;
+}
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return "";
@@ -51,16 +72,21 @@ const CustomTooltip = ({ active, payload }: any) => {
 export default function ProjectReports() {
   const [mounted, setMounted] = useState(false);
   const [scenarios, setScenarios] = useState<ScenarioWithEvidences[]>([]);
+  const [metadata, setMetadata] = useState<ProjectMetadataFields | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch scenarios and handle mounting state
   useEffect(() => {
     async function fetchData() {
       try {
-        const data = await getAllScenarios();
-        setScenarios(data);
+        const [scenariosData, metadataData] = await Promise.all([
+          getAllScenarios(),
+          getProjectMetadata()
+        ]);
+        setScenarios(scenariosData);
+        setMetadata(metadataData);
       } catch (err) {
-        console.error("Erro ao carregar cenários para os relatórios:", err);
+        console.error("Erro ao carregar dados para os relatórios:", err);
       } finally {
         setLoading(false);
       }
@@ -90,24 +116,44 @@ export default function ProjectReports() {
     );
   }
 
-  // 1. Progresso Esperado x Realizado por Módulo (Seção 1)
-  const modulesMap = new Map<string, { total: number; completed: number }>();
-  scenarios.forEach((s) => {
-    const stats = modulesMap.get(s.module) || { total: 0, completed: 0 };
-    stats.total += 1;
-    if (s.status === "Concluído") {
-      stats.completed += 1;
-    }
-    modulesMap.set(s.module, stats);
-  });
+  // 1. Progresso Esperado x Realizado (Seção 1)
+  let totalDays = 0;
+  let elapsedDays = 0;
+  let progressoEsperado = 0;
 
-  const progressData = Array.from(modulesMap.entries())
-    .map(([name, stats]) => ({
-      name,
-      realizado: Math.round((stats.completed / stats.total) * 100),
-      esperado: 100 // Meta é sempre 100%
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  if (metadata && metadata.dataInicioTestes && metadata.dataPrevistaFim) {
+    totalDays = getBusinessDays(metadata.dataInicioTestes, metadata.dataPrevistaFim);
+    
+    const todayObj = new Date();
+    const year = todayObj.getFullYear();
+    const month = String(todayObj.getMonth() + 1).padStart(2, "0");
+    const day = String(todayObj.getDate()).padStart(2, "0");
+    const todayStr = `${year}-${month}-${day}`;
+    
+    const endDate = new Date(metadata.dataPrevistaFim + "T00:00:00");
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    
+    if (todayDate > endDate) {
+      elapsedDays = totalDays;
+    } else {
+      elapsedDays = getBusinessDays(metadata.dataInicioTestes, todayStr);
+    }
+    
+    progressoEsperado = totalDays > 0 ? Math.min(Math.round((elapsedDays / totalDays) * 100), 100) : 0;
+  }
+
+  const totalScenariosCount = scenarios.length;
+  const completedScenariosCount = scenarios.filter((s) => s.status === "Concluído").length;
+  const progressoReal = totalScenariosCount > 0 ? Math.round((completedScenariosCount / totalScenariosCount) * 100) : 0;
+
+  const progressData = [
+    {
+      name: "Progresso do Projeto",
+      esperado: progressoEsperado,
+      realizado: progressoReal,
+    },
+  ];
 
   // 2. Divisão por Módulos (Dados Mestres vs Movimentações) (Seção 2)
   let masterExecutados = 0;
@@ -233,10 +279,10 @@ export default function ProjectReports() {
           <div>
             <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
               <BarChart3 className="h-5 w-5 text-blue-600" />
-              Progresso por módulo
+              Progresso Esperado x Real
             </h2>
             <p className="text-sm text-slate-500">
-              Comparativo entre o avanço esperado e o realizado em cada módulo do projeto.
+              Comparativo entre o progresso esperado com base nos dias úteis e o progresso real dos cenários concluídos.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
@@ -244,7 +290,7 @@ export default function ProjectReports() {
           </div>
         </div>
 
-        <div className="h-96 w-full">
+        <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={progressData}
@@ -253,11 +299,12 @@ export default function ProjectReports() {
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
               <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
-              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} domain={[0, 100]} />
+              <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12, fill: "#475569" }} />
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Tooltip formatter={(value: any) => [`${value}%`]} />
               <Legend />
-              <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
+              <Bar dataKey="esperado" name="Esperado" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={16} />
+              <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={16} />
             </BarChart>
           </ResponsiveContainer>
         </div>
