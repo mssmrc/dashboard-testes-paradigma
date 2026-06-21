@@ -19,6 +19,15 @@ import {
 import { BarChart3, PieChart as PieChartIcon, Layers, Calendar } from "lucide-react";
 import { getAllScenarios, type ScenarioWithEvidences } from "@/lib/actions/scenarios";
 import { getProjectMetadata, type ProjectMetadataFields } from "@/lib/actions/project-metadata";
+import { slugToModule } from "@/lib/module-slug";
+
+function formatFullDate(dateStr: string): string {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
+  return `${day}/${month}/${year}`;
+}
 
 function getBusinessDays(startDateStr: string, endDateStr: string): number {
   if (!startDateStr || !endDateStr) return 0;
@@ -69,7 +78,11 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export default function ProjectReports() {
+export interface ProjectReportsProps {
+  moduleSlug?: string;
+}
+
+export default function ProjectReports({ moduleSlug }: ProjectReportsProps = {}) {
   const [mounted, setMounted] = useState(false);
   const [scenarios, setScenarios] = useState<ScenarioWithEvidences[]>([]);
   const [metadata, setMetadata] = useState<ProjectMetadataFields | null>(null);
@@ -116,6 +129,46 @@ export default function ProjectReports() {
     );
   }
 
+  const activeModuleName = moduleSlug ? slugToModule(moduleSlug) : null;
+  const filteredScenarios = activeModuleName
+    ? scenarios.filter((s) => s.module.trim().toLowerCase() === activeModuleName.trim().toLowerCase())
+    : scenarios;
+
+  if (moduleSlug && filteredScenarios.length === 0) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <BarChart3 className="mb-3 h-12 w-12 text-slate-300" />
+        <h3 className="text-lg font-medium text-slate-800">Nenhum dado para este módulo</h3>
+        <p className="mt-1 text-sm text-slate-500 max-w-sm">
+          Não há cenários de teste cadastrados para o módulo "{activeModuleName}".
+        </p>
+      </div>
+    );
+  }
+
+  // Regra de Negócio da Data de Conclusão (Microvisão)
+  let finalizationDate = "Em andamento";
+  if (moduleSlug) {
+    const totalDeCenariosDoModulo = filteredScenarios.length;
+    const cenariosConcluidosDoModulo = filteredScenarios.filter((s) => s.status === "Concluído").length;
+    const isFinished = totalDeCenariosDoModulo === cenariosConcluidosDoModulo && totalDeCenariosDoModulo > 0;
+
+    if (isFinished) {
+      const completedDates = filteredScenarios
+        .filter((s) => s.status === "Concluído" && s.executionDate)
+        .map((s) => s.executionDate as string);
+
+      if (completedDates.length > 0) {
+        const latestDateStr = completedDates.reduce((latest, current) => current > latest ? current : latest);
+        finalizationDate = `Módulo Finalizado em: ${formatFullDate(latestDateStr)}`;
+      } else {
+        finalizationDate = "Módulo Finalizado";
+      }
+    } else {
+      finalizationDate = "Em andamento";
+    }
+  }
+
   // 1. Progresso Esperado x Realizado (Seção 1)
   let totalDays = 0;
   let elapsedDays = 0;
@@ -143,13 +196,13 @@ export default function ProjectReports() {
     progressoEsperado = totalDays > 0 ? Math.min(Math.round((elapsedDays / totalDays) * 100), 100) : 0;
   }
 
-  const totalScenariosCount = scenarios.length;
-  const completedScenariosCount = scenarios.filter((s) => s.status === "Concluído").length;
+  const totalScenariosCount = filteredScenarios.length;
+  const completedScenariosCount = filteredScenarios.filter((s) => s.status === "Concluído").length;
   const progressoReal = totalScenariosCount > 0 ? Math.round((completedScenariosCount / totalScenariosCount) * 100) : 0;
 
   const progressData = [
     {
-      name: "Progresso do Projeto",
+      name: moduleSlug ? "Progresso do Módulo" : "Progresso do Projeto",
       esperado: progressoEsperado,
       realizado: progressoReal,
     },
@@ -157,7 +210,7 @@ export default function ProjectReports() {
 
   // Progresso por Módulo
   const modulesMap = new Map<string, { total: number; completed: number }>();
-  scenarios.forEach((s) => {
+  filteredScenarios.forEach((s) => {
     const stats = modulesMap.get(s.module) || { total: 0, completed: 0 };
     stats.total += 1;
     if (s.status === "Concluído") {
@@ -179,7 +232,7 @@ export default function ProjectReports() {
   let transactionExecutados = 0;
   let transactionRestantes = 0;
 
-  scenarios.forEach((s) => {
+  filteredScenarios.forEach((s) => {
     const isMaster =
       s.module.trim().toLowerCase() === "dados mestres" ||
       s.module.trim().toLowerCase() === "dados-mestres" ||
@@ -255,7 +308,7 @@ export default function ProjectReports() {
   let inProgressCount = 0;
   let notStartedCount = 0;
 
-  scenarios.forEach((s) => {
+  filteredScenarios.forEach((s) => {
     if (s.status === "Concluído") {
       completedCount += 1;
     } else if (s.status === "Em andamento") {
@@ -275,7 +328,7 @@ export default function ProjectReports() {
 
   // 4. Cenários Concluídos por Dia (Seção 3 - Linha)
   const dailyMap = new Map<string, number>();
-  scenarios.forEach((s) => {
+  filteredScenarios.forEach((s) => {
     if (s.status === "Concluído" && s.executionDate) {
       dailyMap.set(s.executionDate, (dailyMap.get(s.executionDate) || 0) + 1);
     }
@@ -291,6 +344,27 @@ export default function ProjectReports() {
 
   return (
     <div className="space-y-8">
+      {moduleSlug && (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-800">
+              Progresso do Módulo: <span className="text-blue-600">{slugToModule(moduleSlug)}</span>
+            </h3>
+            <p className="text-sm text-slate-500">
+              Visão geral do andamento e finalização dos testes deste módulo.
+            </p>
+          </div>
+          <div className={`px-4 py-2.5 rounded-lg text-sm font-bold border flex items-center gap-2 ${
+            finalizationDate.startsWith("Módulo Finalizado")
+              ? "bg-green-50 text-green-700 border-green-200"
+              : "bg-amber-50 text-amber-700 border-amber-200"
+          }`}>
+            <span className={`h-2 w-2 rounded-full ${finalizationDate.startsWith("Módulo Finalizado") ? "bg-green-500" : "bg-amber-500"}`} />
+            {finalizationDate}
+          </div>
+        </div>
+      )}
+
       {/* Seção 1: Progresso Esperado x Real (Horizontal Bar Chart) */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -329,35 +403,37 @@ export default function ProjectReports() {
       </div>
 
       {/* Gráfico Restaurado: Progresso por módulo */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-6">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
-            <BarChart3 className="h-5 w-5 text-blue-600" />
-            Progresso por módulo
-          </h2>
-          <p className="text-sm text-slate-500">
-            Comparativo de avanço realizado em cada módulo do projeto.
-          </p>
-        </div>
+      {!moduleSlug && (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-6">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Progresso por módulo
+            </h2>
+            <p className="text-sm text-slate-500">
+              Comparativo de avanço realizado em cada módulo do projeto.
+            </p>
+          </div>
 
-        <div className="h-96 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={moduleProgressData}
-              layout="vertical"
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-              <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
-              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} domain={[0, 100]} />
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <Tooltip formatter={(value: any) => [`${value}%`]} />
-              <Legend />
-              <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-96 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={moduleProgressData}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+                <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
+                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} domain={[0, 100]} />
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <Tooltip formatter={(value: any) => [`${value}%`]} />
+                <Legend />
+                <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Seção 2: Divisão por Módulos (Master vs Transaction) */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
