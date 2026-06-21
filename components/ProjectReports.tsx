@@ -155,6 +155,24 @@ export default function ProjectReports() {
     },
   ];
 
+  // Progresso por Módulo
+  const modulesMap = new Map<string, { total: number; completed: number }>();
+  scenarios.forEach((s) => {
+    const stats = modulesMap.get(s.module) || { total: 0, completed: 0 };
+    stats.total += 1;
+    if (s.status === "Concluído") {
+      stats.completed += 1;
+    }
+    modulesMap.set(s.module, stats);
+  });
+
+  const moduleProgressData = Array.from(modulesMap.entries())
+    .map(([name, stats]) => ({
+      name,
+      realizado: Math.round((stats.completed / stats.total) * 100),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   // 2. Divisão por Módulos (Dados Mestres vs Movimentações) (Seção 2)
   let masterExecutados = 0;
   let masterRestantes = 0;
@@ -305,6 +323,37 @@ export default function ProjectReports() {
               <Legend />
               <Bar dataKey="esperado" name="Esperado" fill="#3B82F6" radius={[0, 4, 4, 0]} barSize={16} />
               <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Gráfico Restaurado: Progresso por módulo */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+            <BarChart3 className="h-5 w-5 text-blue-600" />
+            Progresso por módulo
+          </h2>
+          <p className="text-sm text-slate-500">
+            Comparativo de avanço realizado em cada módulo do projeto.
+          </p>
+        </div>
+
+        <div className="h-96 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={moduleProgressData}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+              <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
+              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} domain={[0, 100]} />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Tooltip formatter={(value: any) => [`${value}%`]} />
+              <Legend />
+              <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
             </BarChart>
           </ResponsiveContainer>
         </div>
