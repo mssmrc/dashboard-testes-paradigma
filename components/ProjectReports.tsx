@@ -233,7 +233,7 @@ export default function ProjectReports() {
           <div>
             <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
               <BarChart3 className="h-5 w-5 text-blue-600" />
-              Progresso Esperado x Realizado por Módulo
+              Progresso por módulo
             </h2>
             <p className="text-sm text-slate-500">
               Comparativo entre o avanço esperado e o realizado em cada módulo do projeto.
@@ -253,12 +253,11 @@ export default function ProjectReports() {
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
               <XAxis type="number" domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 12, fill: "#475569" }} />
-              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} />
+              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fill: "#475569" }} domain={[0, 100]} />
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Tooltip formatter={(value: any) => [`${value}%`]} />
               <Legend />
               <Bar dataKey="realizado" name="Realizado" fill="#22c55e" radius={[0, 4, 4, 0]} barSize={12} />
-              <Bar dataKey="esperado" name="Esperado" fill="#94a3b8" radius={[0, 4, 4, 0]} barSize={12} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -269,7 +268,7 @@ export default function ProjectReports() {
         <div className="mb-6">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-800">
             <Layers className="h-5 w-5 text-blue-600" />
-            Divisão por Módulos: Dados Mestres vs Movimentações
+            Avanço Dados mestres x Movimentações
           </h2>
           <p className="text-sm text-slate-500">
             Comparativo entre cenários de configuração/dados cadastrais estáveis e fluxos de transações operacionais dinâmicas.
