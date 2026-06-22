@@ -5,7 +5,7 @@ export const scenarios = sqliteTable("scenarios", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   module: text("module").notNull(),
   functionality: text("functionality").notNull(),
-  name: text("name").notNull(),
+  name: text("name").notNull().unique(),
   expectedResult: text("expected_result").notNull(),
   status: text("status", {
     enum: ["Não iniciado", "Em andamento", "Concluído"],

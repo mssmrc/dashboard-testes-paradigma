@@ -3,8 +3,10 @@
 import { useRef, useState } from "react";
 import { Eye, Pencil, Trash2, Paperclip } from "lucide-react";
 import type { ScenarioWithEvidences } from "@/lib/actions/scenarios";
-import { SCENARIO_STATUSES } from "@/lib/constants";
+import { SCENARIO_STATUSES, type ScenarioStatus } from "@/lib/constants";
 import type { ScenarioDraft } from "./ScenarioTable";
+import { updateScenario } from "@/lib/actions/scenarios";
+import { useRouter } from "next/navigation";
 
 type ScenarioTableRowProps = {
   scenario: ScenarioWithEvidences;
@@ -34,6 +36,7 @@ export function ScenarioTableRow({
   isSelected,
   onSelectToggle,
 }: ScenarioTableRowProps) {
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -64,6 +67,20 @@ export function ScenarioTableRow({
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleStatusChange(newStatus: string) {
+    const previousStatus = draft.status;
+    onDraftChange(scenario.id, "status", newStatus);
+
+    try {
+      await updateScenario(scenario.id, { status: newStatus as ScenarioStatus });
+      router.refresh();
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      onDraftChange(scenario.id, "status", previousStatus);
+      alert("Erro ao atualizar o status no banco de dados.");
     }
   }
 
@@ -112,7 +129,7 @@ export function ScenarioTableRow({
         <select
           value={draft.status}
           onChange={(e) =>
-            onDraftChange(scenario.id, "status", e.target.value)
+            handleStatusChange(e.target.value)
           }
           className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         >

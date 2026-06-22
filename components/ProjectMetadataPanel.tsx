@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Save, Pencil, Upload } from "lucide-react";
 import {
   saveProjectMetadata,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/project-metadata";
 import { ClientLogo } from "@/components/BrandLogos";
 import { useRouter } from "next/navigation";
+import { getAllScenarios } from "@/lib/actions/scenarios";
 
 type ProjectMetadataPanelProps = {
   initialData: ProjectMetadataFields;
@@ -19,6 +20,24 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
   const router = useRouter();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<ProjectMetadataFields>(initialData);
+  const [frozen, setFrozen] = useState(false);
+
+  useEffect(() => {
+    async function checkFreeze() {
+      try {
+        const scenarios = await getAllScenarios();
+        const total = scenarios.length;
+        const completed = scenarios.filter((s) => s.status === "Concluído").length;
+        if (total > 0 && total === completed) {
+          setFrozen(true);
+        }
+      } catch (err) {
+        console.error("Erro ao verificar congelamento do projeto:", err);
+      }
+    }
+    checkFreeze();
+  }, []);
+
   const [locked, setLocked] = useState(
     Boolean(
       initialData.clientName ||
@@ -145,12 +164,18 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
     return dateStr;
   };
 
-  const inputClass = locked
-    ? "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+  const inputClass = (locked || frozen)
+    ? "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 cursor-not-allowed"
     : "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
   return (
     <form onSubmit={handleSave} className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      {frozen && (
+        <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-3.5 text-sm text-amber-800 font-semibold flex items-center gap-2">
+          ⚠️ O projeto está CONGELADO porque todos os cenários de teste foram concluídos!
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-slate-800">Dados do Projeto</h2>
         <div className="flex gap-2">
@@ -158,7 +183,8 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             <button
               type="button"
               onClick={handleEdit}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              disabled={frozen}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Pencil className="h-4 w-4" />
               Editar
@@ -166,7 +192,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
           ) : (
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || frozen}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
@@ -176,7 +202,8 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
           <button
             type="button"
             onClick={handleClearProjectMetadata}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+            disabled={frozen}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Limpar Dados do Projeto
           </button>
@@ -201,7 +228,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
           ) : (
             <span className="text-sm text-slate-400">Nenhum logo enviado</span>
           )}
-          {!locked && (
+          {!locked && !frozen && (
             <>
               <button
                 type="button"
@@ -245,7 +272,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             type="text"
             value={form.clientName}
             onChange={(e) => setForm({ ...form, clientName: e.target.value })}
-            readOnly={locked}
+            readOnly={locked || frozen}
             required
             placeholder="Ex: Empresa XYZ Ltda."
             className={inputClass}
@@ -259,7 +286,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             type="text"
             value={form.projectName}
             onChange={(e) => setForm({ ...form, projectName: e.target.value })}
-            readOnly={locked}
+            readOnly={locked || frozen}
             required
             placeholder="Ex: Homologação Portal de Compras"
             className={inputClass}
@@ -273,7 +300,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             type="text"
             value={form.analystName}
             onChange={(e) => setForm({ ...form, analystName: e.target.value })}
-            readOnly={locked}
+            readOnly={locked || frozen}
             required
             placeholder="Ex: Moisés Souza"
             className={inputClass}
@@ -287,7 +314,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             type="text"
             value={form.pmName}
             onChange={(e) => setForm({ ...form, pmName: e.target.value })}
-            readOnly={locked}
+            readOnly={locked || frozen}
             required
             placeholder="Ex: Moisés Souza"
             className={inputClass}
@@ -298,11 +325,11 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             Data de início dos testes
           </label>
           <input
-            type={locked ? "text" : "date"}
+            type={(locked || frozen) ? "text" : "date"}
             lang="pt-BR"
-            value={locked ? formatDateToBR(form.dataInicioTestes) : form.dataInicioTestes}
+            value={(locked || frozen) ? formatDateToBR(form.dataInicioTestes) : form.dataInicioTestes}
             onChange={(e) => setForm({ ...form, dataInicioTestes: e.target.value })}
-            readOnly={locked}
+            readOnly={locked || frozen}
             required
             className={inputClass}
           />
@@ -312,11 +339,11 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             Data prevista de finalização dos testes
           </label>
           <input
-            type={locked ? "text" : "date"}
+            type={(locked || frozen) ? "text" : "date"}
             lang="pt-BR"
-            value={locked ? formatDateToBR(form.dataPrevistaFim) : form.dataPrevistaFim}
+            value={(locked || frozen) ? formatDateToBR(form.dataPrevistaFim) : form.dataPrevistaFim}
             onChange={(e) => setForm({ ...form, dataPrevistaFim: e.target.value })}
-            readOnly={locked}
+            readOnly={locked || frozen}
             required
             className={inputClass}
           />
@@ -326,11 +353,11 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
             Data real de finalização dos testes
           </label>
           <input
-            type={locked ? "text" : "date"}
+            type={(locked || frozen) ? "text" : "date"}
             lang="pt-BR"
-            value={locked ? formatDateToBR(form.dataRealFim) : form.dataRealFim}
+            value={(locked || frozen) ? formatDateToBR(form.dataRealFim) : form.dataRealFim}
             onChange={(e) => setForm({ ...form, dataRealFim: e.target.value })}
-            readOnly={locked}
+            readOnly={locked || frozen}
             className={inputClass}
           />
         </div>
@@ -341,7 +368,7 @@ export function ProjectMetadataPanel({ initialData }: ProjectMetadataPanelProps)
           <select
             value={form.faseTestes}
             onChange={(e) => setForm({ ...form, faseTestes: e.target.value })}
-            disabled={locked}
+            disabled={locked || frozen}
             required
             className={inputClass}
           >

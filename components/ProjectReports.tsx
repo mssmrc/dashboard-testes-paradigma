@@ -344,6 +344,43 @@ export default function ProjectReports({ moduleSlug }: ProjectReportsProps = {})
 
   return (
     <div className="space-y-8">
+      <div className="flex justify-end no-print">
+        <button
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 cursor-pointer"
+        >
+          Exportar Relatório
+        </button>
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          .no-print,
+          button,
+          a,
+          nav,
+          header,
+          footer,
+          .mb-8,
+          section:has(.ModuleGrid),
+          .ModuleGrid,
+          input,
+          select {
+            display: none !important;
+          }
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+          }
+          .rounded-xl {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+        }
+      ` }} />
+
       {moduleSlug && (
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

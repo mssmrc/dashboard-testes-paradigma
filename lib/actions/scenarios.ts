@@ -218,9 +218,11 @@ export async function bulkImportScenarios(rows: BulkImportRow[]) {
     return { inserted: 0 };
   }
 
-  await db.insert(scenarios).values(
-    rows.map((row) => ({
-      module: row.module,
+  const sanitizedRows = rows.map((row) => {
+    const trimmed = row.module.trim();
+    const sanitizedModule = trimmed ? trimmed.charAt(0).toUpperCase() + trimmed.slice(1) : "";
+    return {
+      module: sanitizedModule,
       functionality: row.functionality,
       name: row.name,
       expectedResult: row.expectedResult,
@@ -228,8 +230,19 @@ export async function bulkImportScenarios(rows: BulkImportRow[]) {
       executionDate: row.executionDate ?? null,
       executor: row.executor ?? null,
       observations: row.observations ?? null,
-    })),
-  );
+    };
+  });
+
+  await db
+    .insert(scenarios)
+    .values(sanitizedRows)
+    .onConflictDoUpdate({
+      target: scenarios.name,
+      set: {
+        status: sql`excluded.status`,
+        module: sql`excluded.module`,
+      },
+    });
 
   revalidatePath("/");
   revalidatePath("/modulo/[slug]", "page");
