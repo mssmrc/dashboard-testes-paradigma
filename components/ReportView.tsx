@@ -68,6 +68,15 @@ export function ReportView({
     year: "numeric",
   });
 
+  const formatDateToBR = (dateStr?: string) => {
+    if (!dateStr) return "—";
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  };
+
   return (
     <div className="report-page min-h-screen bg-white text-slate-900">
       <header className="report-header border-b border-slate-200 px-8 py-6">
@@ -108,6 +117,30 @@ export function ReportView({
               <div>
                 <dt className="font-medium text-slate-500">Analista de Testes</dt>
                 <dd>{metadata.analystName}</dd>
+              </div>
+            )}
+            {metadata.dataInicioTestes && (
+              <div>
+                <dt className="font-medium text-slate-500">Data de início dos testes</dt>
+                <dd>{formatDateToBR(metadata.dataInicioTestes)}</dd>
+              </div>
+            )}
+            {metadata.dataPrevistaFim && (
+              <div>
+                <dt className="font-medium text-slate-500">Data prevista de finalização dos testes</dt>
+                <dd>{formatDateToBR(metadata.dataPrevistaFim)}</dd>
+              </div>
+            )}
+            {metadata.dataRealFim && (
+              <div>
+                <dt className="font-medium text-slate-500">Data real de finalização dos testes</dt>
+                <dd>{formatDateToBR(metadata.dataRealFim)}</dd>
+              </div>
+            )}
+            {metadata.faseTestes && (
+              <div>
+                <dt className="font-medium text-slate-500">Fase de testes</dt>
+                <dd>{metadata.faseTestes}</dd>
               </div>
             )}
           </dl>
