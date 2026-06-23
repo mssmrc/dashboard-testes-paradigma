@@ -2,12 +2,18 @@ import type { ScenarioWithEvidences } from "@/lib/actions/scenarios";
 import type { ProjectMetadataFields } from "@/lib/actions/project-metadata";
 import { ParadigmaLogo, ClientLogo } from "@/components/BrandLogos";
 import { PrintTrigger } from "@/components/PrintTrigger";
+import { StatusPieChart, CompletedLineChart } from "@/components/DashboardCharts";
+import { BarChart3, TrendingUp } from "lucide-react";
 import "./report.css";
 
 type ReportViewProps = {
   metadata: ProjectMetadataFields;
   groupedScenarios: { module: string; scenarios: ScenarioWithEvidences[] }[];
   title: string;
+  stats?: {
+    statusCounts: { status: string; count: number }[];
+    completedByDate: { date: string | null; count: number }[];
+  };
 };
 
 function ScenarioBlock({ scenario }: { scenario: ScenarioWithEvidences }) {
@@ -55,6 +61,7 @@ export function ReportView({
   metadata,
   groupedScenarios,
   title,
+  stats,
 }: ReportViewProps) {
   const generatedAt = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -111,6 +118,30 @@ export function ReportView({
       </header>
 
       <main className="mx-auto max-w-5xl px-8 py-8">
+        {stats && (
+          <section className="mb-10 grid gap-6 md:grid-cols-2 print:grid-cols-2 print:gap-6 print:break-inside-avoid">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none">
+              <div className="mb-4 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                <h2 className="font-semibold text-slate-800">
+                  Status de execução geral
+                </h2>
+              </div>
+              <StatusPieChart data={stats.statusCounts} />
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none">
+              <div className="mb-4 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                <h2 className="font-semibold text-slate-800">
+                  Cenários concluídos por dia
+                </h2>
+              </div>
+              <CompletedLineChart data={stats.completedByDate} />
+            </div>
+          </section>
+        )}
+
         {groupedScenarios.map((group, index) => (
           <section
             key={group.module}
