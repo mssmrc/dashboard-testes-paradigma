@@ -119,8 +119,8 @@ export function ReportView({
 
       <main className="mx-auto max-w-5xl px-8 py-8">
         {stats && (
-          <section className="mb-10 grid gap-6 md:grid-cols-2 print:grid-cols-2 print:gap-6 print:break-inside-avoid">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none">
+          <section className="mb-10 flex flex-col gap-8 print:gap-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none print:break-inside-avoid">
               <div className="mb-4 flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-blue-600" />
                 <h2 className="font-semibold text-slate-800">
@@ -130,7 +130,7 @@ export function ReportView({
               <StatusPieChart data={stats.statusCounts} />
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none print:break-inside-avoid">
               <div className="mb-4 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-blue-600" />
                 <h2 className="font-semibold text-slate-800">
