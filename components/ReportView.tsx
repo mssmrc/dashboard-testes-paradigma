@@ -1,7 +1,6 @@
 import type { ScenarioWithEvidences } from "@/lib/actions/scenarios";
 import type { ProjectMetadataFields } from "@/lib/actions/project-metadata";
 import { ParadigmaLogo, ClientLogo } from "@/components/BrandLogos";
-import { PrintTrigger } from "@/components/PrintTrigger";
 import { StatusPieChart, CompletedLineChart } from "@/components/DashboardCharts";
 import { BarChart3, TrendingUp } from "lucide-react";
 import "./report.css";
@@ -71,8 +70,6 @@ export function ReportView({
 
   return (
     <div className="report-page min-h-screen bg-white text-slate-900">
-      <PrintTrigger />
-
       <header className="report-header border-b border-slate-200 px-8 py-6">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 print:flex print:flex-row print:justify-between print:items-center">
           <ParadigmaLogo className="h-[50px] print:h-[50px] print:w-auto shrink-0" />
@@ -119,8 +116,8 @@ export function ReportView({
 
       <main className="mx-auto max-w-5xl px-8 py-8">
         {stats && (
-          <section className="mb-10 flex flex-col gap-8 print:gap-8">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none print:break-inside-avoid">
+          <section className="mb-10 flex flex-col gap-8 print:block print:space-y-8">
+            <div className="report-chart-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none print:break-inside-avoid">
               <div className="mb-4 flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-blue-600" />
                 <h2 className="font-semibold text-slate-800">
@@ -130,7 +127,7 @@ export function ReportView({
               <StatusPieChart data={stats.statusCounts} />
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none print:break-inside-avoid">
+            <div className="report-chart-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none print:break-inside-avoid">
               <div className="mb-4 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-blue-600" />
                 <h2 className="font-semibold text-slate-800">

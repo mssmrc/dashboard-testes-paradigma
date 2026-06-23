@@ -373,10 +373,17 @@ export default function ProjectReports({ moduleSlug }: ProjectReportsProps = {})
             margin: 0 !important;
             max-width: 100% !important;
           }
+          .grid {
+            display: block !important;
+          }
           .rounded-xl {
             border: none !important;
             box-shadow: none !important;
             padding: 0 !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            display: block !important;
+            margin-bottom: 2rem !important;
           }
         }
       ` }} />
